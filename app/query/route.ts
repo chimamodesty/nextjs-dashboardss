@@ -1,26 +1,40 @@
-// import { db } from "@vercel/postgres";
+import { db } from "@vercel/postgres";
 
-// const client = await db.connect();
+const client = await db.connect();
 
-// async function listInvoices() {
-// 	const data = await client.sql`
-//     SELECT invoices.amount, customers.name
-//     FROM invoices
-//     JOIN customers ON invoices.customer_id = customers.id
-//     WHERE invoices.amount = 666;
-//   `;
-
-// 	return data.rows;
-// }
+async function listInvoices() {
+  const data = await client.sql`
+    SELECT invoices.amount, customers.name
+    FROM invoices
+    JOIN customers ON invoices.customer_id = customers.id
+    WHERE invoices.amount = 32545;
+  `;
+  return data.rows;
+}
 
 export async function GET() {
-  return Response.json({
-    message:
-      'Uncomment this file and remove this line. You can delete this file when you are finished.',
-  });
-  // try {
-  // 	return Response.json(await listInvoices());
-  // } catch (error) {
-  // 	return Response.json({ error }, { status: 500 });
-  // }
+  try {
+    const invoices = await listInvoices();
+
+    // If no data is returned, indicate this in the response
+    if (invoices.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No invoices found with the specified criteria." }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(JSON.stringify(invoices), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("Error fetching invoices:", errorMessage);
+
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
